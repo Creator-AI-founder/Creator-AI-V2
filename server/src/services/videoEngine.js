@@ -10,8 +10,22 @@ const { CaptionEngine } = require("./captions/captionEngine");
 const execAsync = util.promisify(exec);
 
 /**
- * Check FFmpeg & FFprobe availability.
+ * Safely parse FPS string from ffprobe (e.g., "30/1", "30000/1001").
  */
+function parseFps(fpsStr) {
+  if (!fpsStr || typeof fpsStr !== "string") return 30;
+  const parts = fpsStr.split("/");
+  if (parts.length === 2) {
+    const num = parseFloat(parts[0]);
+    const den = parseFloat(parts[1]);
+    if (den !== 0 && !isNaN(num) && !isNaN(den)) {
+      return num / den;
+    }
+  }
+  const val = parseFloat(fpsStr);
+  return isNaN(val) ? 30 : val;
+}
+
 async function checkFFmpegAvailability() {
   try {
     const { stdout: ffmpegOut } = await execAsync("ffmpeg -version");
@@ -60,7 +74,7 @@ async function inspectVideoFile(filePath) {
       sizeBytes: parseInt(data.format?.size || 0, 10),
       width: videoStream?.width || 1080,
       height: videoStream?.height || 1920,
-      fps: eval(videoStream?.r_frame_rate || "30/1"),
+      fps: parseFps(videoStream?.r_frame_rate),
       videoCodec: videoStream?.codec_name,
       audioCodec: audioStream?.codec_name,
       hasAudio: !!audioStream,
@@ -241,15 +255,35 @@ async function processEditBlueprint(project, outputPath) {
       throw new Error("Source video file not found for edit pipeline");
     }
 
+    // Add TRIM/CUT
+    const trimAction = actions.find(a => a.type === "TRIM" || a.type === "CUT");
+    let ssFlag = "";
+    let durationFlag = "";
+    if (trimAction) {
+      const start = trimAction.start !== undefined ? trimAction.start : (trimAction.params?.sourceStart || 0);
+      const end = trimAction.end !== undefined ? trimAction.end : (trimAction.params?.sourceEnd || 0);
+      if (end > start) {
+        ssFlag = `-ss ${start}`;
+        durationFlag = `-t ${end - start}`;
+      }
+    }
+
     // Assemble filters
-    let cmdArgs = `ffmpeg -y -i "${sourcePath}"`;
+    let cmdArgs = `ffmpeg -y ${ssFlag} -i "${sourcePath}" ${durationFlag}`;
     let vfChain = [];
 
-    // Add ZOOM
-    const zoomAction = actions.find(a => a.type === "ZOOM");
+    // Add ZOOM (respecting start, end, scaleFrom, scaleTo)
+    const zoomActions = actions.filter(a => a.type === "ZOOM");
+    if (zoomActions.length > 1) {
+      throw new Error("Multiple ZOOM actions are not supported simultaneously in this version");
+    }
+    const zoomAction = zoomActions[0];
     if (zoomAction) {
-      const zoom = zoomAction.params?.to || 1.15;
-      vfChain.push(`zoompan=z='min(zoom+0.001,${zoom})':d=1:x=iw/2-(iw/zoom/2):y=ih/2-(ih/zoom/2)`);
+      const scaleTo = zoomAction.params?.scaleTo || zoomAction.params?.to || 1.15;
+      const start = zoomAction.start || 0;
+      const end = zoomAction.end || 5;
+      const enableExpr = `between(t,${start},${end})`;
+      vfChain.push(`zoompan=z='if(between(in_time,${start},${end}),min(max(zoom,1)+0.001,${scaleTo}),1)':d=1:x=iw/2-(iw/zoom/2):y=ih/2-(ih/zoom/2):fps=30`);
     }
 
     // Add CAPTIONS

@@ -1,5 +1,6 @@
 const { chat } = require("./llm/LLMService");
 const { generateDirector, validateDirectorJson } = require("./director/directorService");
+const { validateActions } = require("../blueprint/schema");
 
 /**
  * Perform AI analysis on a video/project draft.
@@ -35,7 +36,14 @@ async function analyzeVideoProject(project, videoMetadata = {}) {
 
   // Build an edit blueprint from the scenes with full compilation
   const { actions, sceneDetails } = compileBlueprintFromScenes(scenes);
-  console.log(`[Director] Compiled ${actions.length} blueprint actions from ${scenes.length} scenes`);
+
+  try {
+    validateActions(actions);
+  } catch (err) {
+    throw new Error(`Compiled blueprint failed action validation: ${err.message}`);
+  }
+
+  console.log(`[Director] Compiled ${actions.length} validated blueprint actions from ${scenes.length} scenes`);
 
   // Build summary and detected topic from the script / hook
   const script = directorResult.script || project.prompt || "Creator AI video";
@@ -85,6 +93,42 @@ function compileBlueprintFromScenes(scenes) {
   const sceneDetails = [];
 
   for (const scene of scenes) {
+    // 0. Media action from the Director visual plan.
+    // The actual asset is resolved later by the Media Asset Resolver.
+    if (scene.visualPlan && typeof scene.visualPlan === "object") {
+      const plan = scene.visualPlan;
+
+      let mediaType = null;
+
+      if (plan.type === "IMAGE") {
+        mediaType = plan.factuality === "creative" ? "IMAGE" : "IMAGE";
+      } else if (plan.type === "VIDEO") {
+        mediaType = plan.factuality === "factual"
+          ? "VIDEO"
+          : "BROLL";
+      }
+
+      if (mediaType) {
+        actions.push({
+          id: `media_${scene.id}`,
+          type: mediaType,
+          start: scene.start,
+          end: scene.end,
+          note: `Media plan for ${scene.id}`,
+          params: {
+            assetId: scene.assetId || null,
+            visualPlan: {
+              mode: plan.mode,
+              type: plan.type,
+              query: plan.query,
+              prompt: plan.prompt,
+              factuality: plan.factuality || "illustrative",
+            },
+          },
+        });
+      }
+    }
+
     // 1. Main KEEP action for the scene duration
     actions.push({
       id: `keep_${scene.id}`,

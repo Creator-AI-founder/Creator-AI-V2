@@ -43,9 +43,10 @@ class CaptionEngine {
    * Generate multi-line caption filter chain from blueprint actions or script.
    * Uses explicit stream labels so it works with filter_complex_script.
    * Output is labeled [outv] for mapping.
+   * NOTE: Only processes explicit CAPTION or TEXT actions. KEEP actions do not produce text.
    */
   generateFilterChain(actions = []) {
-    const textActions = actions.filter((a) => a.type === "TEXT" || a.type === "CAPTION" || a.type === "KEEP");
+    const textActions = actions.filter((a) => a.type === "TEXT" || a.type === "CAPTION");
     if (textActions.length === 0) return null;
 
     let currentLabel = "[0:v]";
