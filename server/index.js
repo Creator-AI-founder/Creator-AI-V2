@@ -144,26 +144,48 @@ app.post("/api/projects/:id/analyze", async (req, res) => {
     return res.status(404).json({ error: "Project not found" });
   }
 
-  updateProject(project.id, { status: "analyzing" });
+  const requestedDuration = Number(req.body?.duration);
+
+  const analysisProject = updateProject(project.id, {
+    status: "analyzing",
+    prompt:
+      typeof req.body?.prompt === "string" && req.body.prompt.trim()
+        ? req.body.prompt.trim()
+        : project.prompt,
+    style:
+      typeof req.body?.style === "string" && req.body.style.trim()
+        ? req.body.style.trim()
+        : project.style,
+    language:
+      typeof req.body?.language === "string" && req.body.language.trim()
+        ? req.body.language.trim()
+        : project.language || "English",
+    duration:
+      Number.isFinite(requestedDuration) && requestedDuration > 0
+        ? requestedDuration
+        : project.duration,
+  });
 
   try {
     let metadata = {};
-    if (project.sourceVideo?.path) {
-      metadata = await inspectVideoFile(project.sourceVideo.path);
+    if (analysisProject.sourceVideo?.path) {
+      metadata = await inspectVideoFile(analysisProject.sourceVideo.path);
     }
 
-    const analysisResult = await analyzeVideoProject(project, metadata);
+    const analysisResult = await analyzeVideoProject(analysisProject, metadata);
 
     const updated = updateProject(project.id, {
       status: "ready",
       analysis: analysisResult,
       blueprint: analysisResult.blueprint || null,
-      director: analysisResult.director || null, // ADDED
+      director: analysisResult.director || null,
     });
 
     res.json({
-      project: updated,
-      analysis: analysisResult,
+      projectId: updated.id,
+      status: updated.status,
+      director: updated.director,
+      blueprint: updated.blueprint,
     });
   } catch (err) {
     updateProject(project.id, { status: "error" });

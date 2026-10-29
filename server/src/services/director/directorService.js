@@ -138,9 +138,22 @@ IMPORTANT RULES:
 - Output ONLY the JSON block. No surrounding text, no markdown fences, no explanations.
 `;
 
-  const userPrompt = `User Idea: "${projectIdea}"
+  const userPrompt = `Create the video DIRECTLY from this exact user request.
 
-Create a Creator AI V2 Director plan for this idea. Follow the schema exactly. Output ONLY the JSON object.`;
+USER REQUEST:
+${projectIdea}
+
+STRICT REQUIREMENTS:
+- The user's requested topic/idea is the source of truth.
+- Do NOT replace the topic with another topic.
+- Do NOT invent a different subject just because it is easier.
+- Preserve the requested language, style, and duration when they are provided.
+- Every scene must directly support the user's requested topic.
+- The hook must be about the user's requested topic.
+- The spoken script must be about the user's requested topic.
+- Visual queries must visually represent the requested topic.
+- If the request says "sky looks blue", the video must explain why the sky looks blue.
+- Output ONLY the JSON object matching the schema. No markdown or explanations.`;
 
   try {
     const result = await chat([

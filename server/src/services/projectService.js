@@ -47,6 +47,7 @@ function createProject(data) {
     sourceVideo: data.sourceVideo || null, // { path, originalName, size, mimeType }
     prompt: data.prompt || "",
     style: data.style || "clean",
+    language: data.language || "English",
     analysis: data.analysis || null,
     blueprint: data.blueprint || null,
     renderedVideo: data.renderedVideo || null,
