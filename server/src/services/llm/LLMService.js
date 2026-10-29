@@ -1,4 +1,5 @@
 const BASE_URL = process.env.LLM_BASE_URL || "http://127.0.0.1:3002/v1";
+// Use exact catalog ID verified as available and ready
 const MODEL = process.env.LLM_MODEL || "gpt-oss-120b";
 
 async function chat(messages, options = {}) {

@@ -1,7 +1,18 @@
 
 # Secrets
 server/.env
+*.env
 
 # Dependencies
 node_modules/
 server/node_modules/
+client/node_modules/
+
+# Build & Runtime outputs
+client/dist/
+server/uploads/
+server/renders/
+data/
+*.log
+.DS_Store
+

@@ -1,10 +1,11 @@
-require("dotenv").config();
+const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, "../.env") });
 
 const { chat } = require("./services/llm/LLMService");
 
 async function main() {
   try {
-    console.log("Testing Creator AI V2 → FreeLLMAPI → GPT-OSS 120B...");
+    console.log("Testing Creator AI V2 → FreeLLMAPI → gpt-oss-120b...");
 
     const result = await chat([
       {
@@ -13,9 +14,9 @@ async function main() {
       },
       {
         role: "user",
-        content: "Reply with exactly: CREATOR AI V2 CONNECTED"
+        content: "Reply with exactly: CREATOR AI V2 CONNECTED VIA GPT-OSS 120B"
       }
-    ]);
+    ], { model: "gpt-oss-120b" });
 
     const output = result?.choices?.[0]?.message?.content;
 
