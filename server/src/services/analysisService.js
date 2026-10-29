@@ -16,6 +16,9 @@ async function analyzeVideoProject(project, videoMetadata = {}) {
   try {
     directorResult = await generateDirector(project.prompt || project.title || "Creator AI video", {
       model,
+      style: project.style || "Cinematic",
+      language: project.language || "English",
+      duration: Number(project.duration) > 0 ? Number(project.duration) : 30,
     });
   } catch (err) {
     throw new Error(`AI Director generation failed: ${err.message}`);

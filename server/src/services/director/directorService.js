@@ -138,10 +138,29 @@ IMPORTANT RULES:
 - Output ONLY the JSON block. No surrounding text, no markdown fences, no explanations.
 `;
 
+  const requestedStyle = options.style || "Cinematic";
+  const requestedLanguage = options.language || "English";
+  const requestedDuration =
+    Number(options.duration) > 0 ? Number(options.duration) : 30;
+
   const userPrompt = `Create the video DIRECTLY from this exact user request.
 
 USER REQUEST:
 ${projectIdea}
+
+REQUIRED SETTINGS:
+- style: ${requestedStyle}
+- language: ${requestedLanguage}
+- duration: ${requestedDuration} seconds
+
+These settings are HARD CONSTRAINTS.
+The JSON output MUST use:
+- "style": "${requestedStyle}"
+- "language": "${requestedLanguage}"
+- "duration": ${requestedDuration}
+
+The final scene MUST end at ${requestedDuration} seconds.
+Do not silently replace these settings with defaults such as Shorts.
 
 STRICT REQUIREMENTS:
 - The user's requested topic/idea is the source of truth.
