@@ -37,7 +37,6 @@ export default function ProjectDetail({ projectId, onNavigate, onProjectUpdated 
     if (!isLocalEngine) return;
     setRendering(true);
     try {
-      await consumeDailyGeneration();
       const res = await apiRequest(`/projects/${projectId}/render`, { method: "POST" });
       const data = await res.json();
       if (res.ok) { setProject(normalizeProject(data.project)); if (onProjectUpdated) onProjectUpdated(); }
