@@ -6,8 +6,19 @@ const SESSION_KEY = "creator-ai-session-v1";
 export const isLocalEngine = ["localhost", "127.0.0.1"].includes(window.location.hostname);
 
 export function getSession() {
-  try { return JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); }
-  catch { return null; }
+  try {
+    const saved = localStorage.getItem(SESSION_KEY);
+    if (saved) return JSON.parse(saved);
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const access_token = hash.get("access_token");
+    const refresh_token = hash.get("refresh_token");
+    if (!access_token) return null;
+    const expires_in = Number(hash.get("expires_in") || 3600);
+    const session = { access_token, refresh_token, token_type: hash.get("token_type") || "bearer", expires_in, expires_at: Math.floor(Date.now() / 1000) + expires_in };
+    saveSession(session);
+    window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+    return session;
+  } catch { return null; }
 }
 function saveSession(session) {
   if (session?.access_token) localStorage.setItem(SESSION_KEY, JSON.stringify(session));
@@ -44,14 +55,6 @@ export async function signOut() {
     }
   } finally { saveSession(null); }
 }
-export async function currentUser(session = getSession()) {
-  if (!session?.access_token) return null;
-  const response = await fetch(SUPABASE_URL + "/auth/v1/user", {
-    headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + session.access_token }
-  });
-  if (!response.ok) return null;
-  return response.json();
-}
 async function validSession() {
   let session = getSession();
   if (!session?.access_token) throw new Error("Please sign in to continue.");
@@ -62,6 +65,15 @@ async function validSession() {
     session = refreshed;
   }
   return session;
+}
+export async function currentUser(session) {
+  const active = await validSession().catch(() => session || null);
+  if (!active?.access_token) return null;
+  const response = await fetch(SUPABASE_URL + "/auth/v1/user", {
+    headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + active.access_token }
+  });
+  if (!response.ok) return null;
+  return response.json();
 }
 export async function apiRequest(path, options = {}) {
   if (isLocalEngine) return fetch("/api" + path, options);
@@ -74,10 +86,5 @@ export async function apiRequest(path, options = {}) {
 }
 export function normalizeProject(project) {
   if (!project) return project;
-  return {
-    ...project,
-    aspectRatio: project.aspectRatio || project.aspect_ratio || "9:16",
-    sourceVideo: project.sourceVideo || project.source_video || null,
-    renderedVideo: project.renderedVideo || project.rendered_video || null
-  };
+  return { ...project, aspectRatio: project.aspectRatio || project.aspect_ratio || "9:16", sourceVideo: project.sourceVideo || project.source_video || null, renderedVideo: project.renderedVideo || project.rendered_video || null };
 }
