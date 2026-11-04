@@ -24,10 +24,10 @@ function saveSession(session) {
   if (session?.access_token) localStorage.setItem(SESSION_KEY, JSON.stringify(session));
   else localStorage.removeItem(SESSION_KEY);
 }
-async function authRequest(path, body, token) {
+async function authRequest(path, body) {
   const response = await fetch(SUPABASE_URL + "/auth/v1/" + path, {
     method: "POST",
-    headers: { apikey: SUPABASE_KEY, "Content-Type": "application/json", ...(token ? { Authorization: "Bearer " + token } : {}) },
+    headers: { apikey: SUPABASE_KEY, "Content-Type": "application/json" },
     body: JSON.stringify(body || {})
   });
   const data = await response.json().catch(() => ({}));
@@ -40,19 +40,16 @@ export async function signIn(email, password) {
   return data;
 }
 export async function signUp(email, password) {
-  const data = await authRequest("signup", { email, password });
+  const data = await authRequest("signup", { email, password, options: { emailRedirectTo: window.location.origin } });
   if (data.access_token) saveSession(data);
   return data;
 }
 export async function signOut() {
   const session = getSession();
   try {
-    if (session?.access_token) {
-      await fetch(SUPABASE_URL + "/auth/v1/logout", {
-        method: "POST",
-        headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + session.access_token }
-      });
-    }
+    if (session?.access_token) await fetch(SUPABASE_URL + "/auth/v1/logout", {
+      method: "POST", headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + session.access_token }
+    });
   } finally { saveSession(null); }
 }
 async function validSession() {
@@ -61,8 +58,7 @@ async function validSession() {
   if (session.expires_at && session.expires_at * 1000 < Date.now() + 60000) {
     if (!session.refresh_token) { saveSession(null); throw new Error("Your session expired. Please sign in again."); }
     const refreshed = await authRequest("token?grant_type=refresh_token", { refresh_token: session.refresh_token });
-    saveSession(refreshed);
-    session = refreshed;
+    saveSession(refreshed); session = refreshed;
   }
   return session;
 }
