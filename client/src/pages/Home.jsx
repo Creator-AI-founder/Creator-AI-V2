@@ -1,80 +1,154 @@
 import React from "react";
-import { ModeCard, ProjectCard, Button } from "../components/UI";
+import {
+  CreatorLogo,
+  ProjectCard,
+} from "../components/UI";
 
-export default function Home({ onNavigate, projects }) {
-  const recentProjects = (projects || []).slice(0, 3);
+export default function Home({
+  onNavigate,
+  projects,
+}) {
+  const recentProjects = (projects || []).slice(0, 2);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-      <div>
-        <h1 style={{ fontSize: "1.6rem", fontWeight: 800, margin: "0 0 6px 0", background: "linear-gradient(to right, #fff, #9b6cff)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-          Create it. Edit it. Make it better.
-        </h1>
-        <p style={{ margin: 0, color: "var(--text-2)", fontSize: "0.95rem" }}>
-          Professional AI Video Studio.
-        </p>
-      </div>
+    <section className="home-page">
+      <div className="home-welcome">
+        <div>
+          <h1>Hey Creator! 👋</h1>
+          <p>What will we create today?</p>
+        </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-        <h2 style={{ fontSize: "1.1rem", fontWeight: 700, margin: 0 }}>Start Editing</h2>
-        <ModeCard
-          icon="✂️"
-          title="EDIT EXISTING VIDEO"
-          description="Upload raw video clip. AI detects silence, hooks, speaker timing & auto-cuts."
-          onClick={() => onNavigate("/edit")}
-        />
-        <h2 style={{ fontSize: "1.1rem", fontWeight: 700, margin: "8px 0 0 0" }}>New Project</h2>
-        <ModeCard
-          icon="✨"
-          title="CREATE FROM CONCEPT"
-          description="Transform an idea into a full script, timeline & edit blueprint."
-          onClick={() => onNavigate("/create")}
-        />
-      </div>
-
-      <div>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: "12px",
-          }}
+        <button
+          type="button"
+          className="notification-button"
+          aria-label="Notifications"
         >
-          <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700 }}>Recent Projects</h3>
+          ♢
+        </button>
+      </div>
+
+      <button
+        type="button"
+        className="hero-card"
+        onClick={() => onNavigate("/create")}
+      >
+        <div className="hero-card__glow" />
+
+        <div className="hero-card__content">
+          <span className="hero-card__eyebrow">
+            CREATOR AI
+          </span>
+
+          <h2>
+            Turn Ideas Into
+            <br />
+            <strong>Stunning Videos</strong>
+          </h2>
+
+          <p>
+            Script, visuals, voice and captions —
+            created together.
+          </p>
+        </div>
+
+        <div className="hero-card__visual">
+          <CreatorLogo compact />
+        </div>
+      </button>
+
+      <section className="home-section">
+        <h2 className="home-section__title">
+          Create New
+        </h2>
+
+        <div className="quick-actions">
+          <button
+            type="button"
+            className="quick-action"
+            onClick={() => onNavigate("/create")}
+          >
+            <div className="quick-action__icon">
+              ✦
+            </div>
+
+            <strong>Create from Idea</strong>
+
+            <span>
+              AI will write, plan and create
+            </span>
+          </button>
+
+          <button
+            type="button"
+            className="quick-action"
+            onClick={() => onNavigate("/edit")}
+          >
+            <div className="quick-action__icon">
+              ↑
+            </div>
+
+            <strong>Upload Video</strong>
+
+            <span>
+              Upload and enhance your video
+            </span>
+          </button>
+        </div>
+      </section>
+
+      <section className="home-section">
+        <div className="home-section__head">
+          <h2 className="home-section__title">
+            Recent Projects
+          </h2>
+
           {recentProjects.length > 0 && (
-            <Button variant="ghost" size="sm" onClick={() => onNavigate("/projects")}>
+            <button
+              type="button"
+              className="text-button"
+              onClick={() =>
+                onNavigate("/projects")
+              }
+            >
               View All
-            </Button>
+            </button>
           )}
         </div>
 
-        {recentProjects.length === 0 ? (
-          <div
-            style={{
-              padding: "24px",
-              background: "var(--bg-1)",
-              borderRadius: "var(--r-md)",
-              border: "1px solid var(--line-0)",
-              textAlign: "center",
-              color: "var(--text-2)",
-              fontSize: "0.85rem",
-            }}
-          >
-            No active projects yet.
-          </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            {recentProjects.map((p) => (
+        {recentProjects.length ? (
+          <div className="recent-projects">
+            {recentProjects.map((project) => (
               <ProjectCard
-                key={p.id}
-                project={p}
-                onClick={() => onNavigate(`/projects/${p.id}`)}
+                key={project.id}
+                project={project}
+                onClick={() =>
+                  onNavigate(
+                    `/projects/${project.id}`
+                  )
+                }
               />
             ))}
           </div>
+        ) : (
+          <button
+            type="button"
+            className="empty-projects"
+            onClick={() => onNavigate("/create")}
+          >
+            <CreatorLogo compact />
+
+            <div>
+              <strong>
+                Create your first video
+              </strong>
+
+              <span>
+                Start with any idea →
+              </span>
+            </div>
+          </button>
         )}
-      </div>
-    </div>
+      </section>
+    </section>
   );
 }

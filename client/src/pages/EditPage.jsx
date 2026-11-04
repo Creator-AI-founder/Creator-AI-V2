@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { apiFetch } from "../lib/api.js";
 import { VideoUploader, Button, CreationSheet } from "../components/UI";
 
 export default function EditPage({ onNavigate, onProjectCreated }) {
@@ -10,7 +11,7 @@ export default function EditPage({ onNavigate, onProjectCreated }) {
     setIsUploading(true);
     try {
       // Create project
-      const createRes = await fetch("/api/projects", {
+      const createRes = await apiFetch("/api/projects", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -27,14 +28,14 @@ export default function EditPage({ onNavigate, onProjectCreated }) {
       const formData = new FormData();
       formData.append("video", selectedFile);
 
-      const uploadRes = await fetch(`/api/projects/${project.id}/upload`, {
+      const uploadRes = await apiFetch(`/api/projects/${project.id}/upload`, {
         method: "POST",
         body: formData,
       });
       const uploadData = await uploadRes.json();
 
       // Trigger initial analysis
-      await fetch(`/api/projects/${project.id}/analyze`, {
+      await apiFetch(`/api/projects/${project.id}/analyze`, {
         method: "POST",
       });
 

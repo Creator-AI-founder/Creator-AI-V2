@@ -11,6 +11,11 @@ export default defineConfig({
         target: process.env.VITE_API_BASE || "http://127.0.0.1:3001",
         changeOrigin: true,
       },
+
+      "/renders": {
+        target: process.env.VITE_API_BASE || "http://127.0.0.1:3001",
+        changeOrigin: true,
+      },
     },
   },
   build: {
