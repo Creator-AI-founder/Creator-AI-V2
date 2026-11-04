@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { VideoPreview, EditPlan, StatusPill, Button } from "../components/UI";
-import { apiRequest, isLocalEngine, normalizeProject } from "../services/cloudApi";
+import { apiRequest, consumeDailyGeneration, isLocalEngine, normalizeProject } from "../services/cloudApi";
 
 export default function ProjectDetail({ projectId, onNavigate, onProjectUpdated }) {
   const [project, setProject] = useState(null);
@@ -24,6 +24,7 @@ export default function ProjectDetail({ projectId, onNavigate, onProjectUpdated 
     if (!isLocalEngine) return;
     setAnalyzing(true);
     try {
+      await consumeDailyGeneration();
       const res = await apiRequest(`/projects/${projectId}/analyze`, { method: "POST" });
       const data = await res.json();
       if (res.ok) { setProject(normalizeProject(data.project)); if (onProjectUpdated) onProjectUpdated(); }
@@ -36,6 +37,7 @@ export default function ProjectDetail({ projectId, onNavigate, onProjectUpdated 
     if (!isLocalEngine) return;
     setRendering(true);
     try {
+      await consumeDailyGeneration();
       const res = await apiRequest(`/projects/${projectId}/render`, { method: "POST" });
       const data = await res.json();
       if (res.ok) { setProject(normalizeProject(data.project)); if (onProjectUpdated) onProjectUpdated(); }

@@ -71,6 +71,17 @@ export async function currentUser(session) {
   if (!response.ok) return null;
   return response.json();
 }
+export async function consumeDailyGeneration() {
+  const session = await validSession();
+  const response = await fetch(EDGE_API + "/usage/consume", {
+    method: "POST",
+    headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + session.access_token }
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data?.error?.message || "Could not check your daily usage.");
+  if (!data.allowed) throw new Error("Daily generation limit reached (" + data.used + "/" + data.daily_limit + "). Try again tomorrow.");
+  return data;
+}
 export async function apiRequest(path, options = {}) {
   if (isLocalEngine) return fetch("/api" + path, options);
   const session = await validSession();

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { VideoUploader, CreationSheet } from "../components/UI";
-import { apiRequest, isLocalEngine } from "../services/cloudApi";
+import { apiRequest, consumeDailyGeneration, isLocalEngine } from "../services/cloudApi";
 
 export default function EditPage({ onNavigate, onProjectCreated }) {
   const [file, setFile] = useState(null);
@@ -27,6 +27,7 @@ export default function EditPage({ onNavigate, onProjectCreated }) {
       const uploadData = await uploadRes.json();
       if (!uploadRes.ok) throw new Error(uploadData?.error?.message || uploadData?.error || "Upload failed.");
       if (isLocalEngine) {
+        await consumeDailyGeneration();
         const analysis = await apiRequest(`/projects/${project.id}/analyze`, { method: "POST" });
         if (!analysis.ok) throw new Error("Upload succeeded, but local analysis failed.");
       } else {

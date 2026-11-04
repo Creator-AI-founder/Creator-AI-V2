@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { CreationSheet } from "../components/UI";
-import { apiRequest, isLocalEngine } from "../services/cloudApi";
+import { apiRequest, consumeDailyGeneration, isLocalEngine } from "../services/cloudApi";
 
 export default function CreatePage({ onNavigate, onProjectCreated }) {
   const [sheet, setSheet] = useState({ prompt: "", aspectRatio: "9:16", style: "bold" });
@@ -22,6 +22,7 @@ export default function CreatePage({ onNavigate, onProjectCreated }) {
       if (!createRes.ok) throw new Error(createData?.error?.message || createData?.error || "Project creation failed.");
       const project = createData.project;
       if (isLocalEngine) {
+        await consumeDailyGeneration();
         const analysis = await apiRequest(`/projects/${project.id}/analyze`, { method: "POST" });
         if (!analysis.ok) throw new Error("Project saved, but local analysis failed.");
       } else {
